@@ -1,13 +1,70 @@
 <script lang="ts">
-	import { SvelteFlow, type Edge, type Node } from '@xyflow/svelte';
+	import { SvelteFlow, type Edge, type EdgeTypes, type Node } from '@xyflow/svelte';
 
 	import '@xyflow/svelte/dist/style.css';
+	import AlbumNode from '../../components/AlbumNode.svelte';
+	import AlbumEdge from '../../components/AlbumEdge.svelte';
+
+	const nodeTypes = { album: AlbumNode };
+
+	const edgeTypes: EdgeTypes = {
+		'album-edge': AlbumEdge
+	};
+
+	let edges = $state.raw(
+		[
+			{
+				id: 'e1-2',
+				source: '1',
+				target: '2',
+				label: 'I want less beats and more atmosphere',
+				sourceHandle: 'source-left',
+				targetHandle: 'target-right'
+			},
+			{
+				id: 'e1-3',
+				source: '1',
+				target: '3',
+				sourceHandle: 'source-right',
+				targetHandle: 'target-left'
+			},
+			{
+				id: 'e1-4',
+				source: '1',
+				target: '4',
+				label: 'I want something noisier',
+				sourceHandle: 'source-bottom',
+				targetHandle: 'target-top'
+			},
+			{
+				id: 'e1-5',
+				source: '1',
+				target: '5',
+				label: 'I want something much more upbeat',
+				sourceHandle: 'source-bottom',
+				targetHandle: 'target-top'
+			},
+			{
+				id: 'e5-6',
+				source: '5',
+				target: '6',
+				sourceHandle: 'source-bottom',
+				targetHandle: 'target-top'
+			}
+		].map((e) => ({
+			...e,
+			deletable: false,
+			selectable: false,
+			focusable: false,
+			type: 'album-edge'
+		})) satisfies Edge[]
+	);
 
 	let nodes = $state.raw(
 		[
 			{
 				id: '1',
-				position: { x: 500, y: 0 },
+				position: { x: 500, y: 50 },
 				data: {
 					label: 'Selected Ambient Works 85-92',
 					imageUrl:
@@ -16,7 +73,7 @@
 			},
 			{
 				id: '2',
-				position: { x: 200, y: 0 },
+				position: { x: 100, y: 50 },
 				data: {
 					label: 'Selected Ambient Works Volume II',
 					imageUrl:
@@ -25,7 +82,7 @@
 			},
 			{
 				id: '3',
-				position: { x: 800, y: 0 },
+				position: { x: 900, y: 50 },
 				data: {
 					label: 'Surfing on Sine Waves',
 					imageUrl:
@@ -34,7 +91,7 @@
 			},
 			{
 				id: '4',
-				position: { x: 300, y: 300 },
+				position: { x: 300, y: 350 },
 				data: {
 					label: '...I Care Because You Do',
 					imageUrl:
@@ -43,7 +100,7 @@
 			},
 			{
 				id: '5',
-				position: { x: 700, y: 300 },
+				position: { x: 700, y: 350 },
 				data: {
 					label: 'Richard D. James Album',
 					imageUrl:
@@ -52,7 +109,7 @@
 			},
 			{
 				id: '6',
-				position: { x: 700, y: 500 },
+				position: { x: 700, y: 550 },
 				data: {
 					label: 'Girl/Boy EP',
 					imageUrl:
@@ -64,37 +121,23 @@
 			draggable: false,
 			connectable: false,
 			deletable: false,
-			selectable: false
-		})) satisfies Node[]
-	);
-
-	let edges = $state.raw(
-		[
-			{ id: 'e1-2', source: '1', target: '2', label: 'I want less beats and more atmosphere' },
-			{ id: 'e1-3', source: '1', target: '3' },
-			{ id: 'e1-4', source: '1', target: '4', label: 'I want something noisier' },
-			{ id: 'e1-5', source: '1', target: '5', label: 'I want something much more upbeat' },
-			{ id: 'e5-6', source: '5', target: '6' }
-		].map((e) => ({
-			...e,
-			deletable: false,
 			selectable: false,
-			focusable: false,
-			labelStyle: 'label'
-		})) satisfies Edge[]
+			type: 'album',
+			data: {
+				...n.data,
+				connectedHandles: Array.from(
+					new Set(
+						edges
+							.filter((e) => e.id.startsWith(`e${n.id}-`) || e.id.endsWith(`-${n.id}`))
+							.filter((e) => e.sourceHandle || e.targetHandle)
+							.map((e) => (e.id.startsWith(`e${n.id}-`) ? e.sourceHandle : e.targetHandle))
+					)
+				)
+			}
+		})) satisfies Node[]
 	);
 </script>
 
 <div style:width="100vw" style:height="100vh">
-	<SvelteFlow bind:nodes bind:edges />
+	<SvelteFlow bind:nodes bind:edges {edgeTypes} {nodeTypes} />
 </div>
-
-<style>
-	:global {
-		.svelte-flow__edge-label {
-			background-color: red;
-			max-width: 100px;
-			color: white;
-		}
-	}
-</style>
